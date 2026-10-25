@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Nova Launcher</string>
+    <string name="settings">Configurações</string>
+    <string name="a11y_lock_label">Nova: bloquear tela</string>
+    <string name="a11y_lock_desc">Usado apenas para bloquear a tela com toque duplo. Não lê o conteúdo da tela.</string>
+</resources>

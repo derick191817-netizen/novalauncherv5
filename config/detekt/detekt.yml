@@ -1,0 +1,16 @@
+build:
+  maxIssues: 0
+style:
+  ForbiddenComment: { active: false }
+  UnsafeCallOnNullableType: { active: true }   # proíbe `!!`
+  MaxLineLength: { maxLineLength: 120 }
+performance:
+  active: true
+coroutines:
+  GlobalCoroutineUsage: { active: true }
+  InjectDispatcher: { active: true }
+complexity:
+  LongMethod: { threshold: 80 }
+  LongParameterList: { functionThreshold: 8, constructorThreshold: 10, ignoreDefaultParameters: true }
+naming:
+  FunctionNaming: { ignoreAnnotated: ['Composable'] }

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ===== Permissões (mínimas; cada uma é explicada na UI de onboarding) ===== -->
+    <!-- Abrir a barra de notificações no swipe-down. Normal: concedida na instalação. -->
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+    <!-- Trocar wallpaper pelo launcher. Normal. -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <!-- Hidden apps com biometria. Normal. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Search universal: contatos. RUNTIME, opcional; só pedida ao ativar o módulo. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <!-- Desinstalar apps pelo menu de long-press (abre o diálogo do sistema). Normal. -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- Garante que nenhuma dependência injete QUERY_ALL_PACKAGES: usamos <queries> abaixo. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:node="remove" />
+    <!-- Widgets: bind via AppWidgetManager.bindAppWidgetIdIfAllowed + ACTION_APPWIDGET_BIND;
+         BIND_APPWIDGET é de assinatura/sistema e NÃO é declarada. -->
+
+    <!-- S Pen / hardware: nada obrigatório, o launcher roda em qualquer aparelho -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="true" />
+    <uses-feature android:name="android.hardware.fingerprint" android:required="false" />
+
+    <!-- ===== Visibilidade de pacotes (substitui QUERY_ALL_PACKAGES) ===== -->
+    <queries>
+        <!-- Todos os apps com ícone de launcher -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Provedores de widget -->
+        <intent><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent>
+        <!-- Icon packs (ADW/Nova/Apex: convenção aberta) -->
+        <intent><action android:name="org.adw.launcher.THEMES" /></intent>
+        <intent><action android:name="com.novalauncher.THEME" /></intent>
+        <!-- Pesquisa na web -->
+        <intent><action android:name="android.intent.action.VIEW" /><data android:scheme="https" /></intent>
+    </queries>
+
+    <application
+        android:name=".NovaApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Nova"
+        android:hardwareAccelerated="true"
+        android:largeHeap="false"
+        android:resizeableActivity="true"
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="34">
+
+        <!-- Launcher: singleTask evita instâncias duplicadas; stateNotNeeded permite o
+             sistema descartar o processo sem salvar estado (reduz RAM). -->
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:excludeFromRecents="true"
+            android:clearTaskOnLaunch="true"
+            android:resumeWhilePausing="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustPan"
+            android:screenOrientation="unspecified"
+            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|smallestScreenSize|screenLayout|density|uiMode|fontScale"
+            android:theme="@style/Theme.Nova.Launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Tela de configurações / onboarding de permissões -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Nova">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.PREFERENCE" />
+            </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+        </activity>
+
+        <!-- Configuração de widgets que exigem tela própria (ACTION_APPWIDGET_CONFIGURE) -->
+        <activity
+            android:name=".widgets.WidgetConfigHostActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Nova.Translucent" />
+
+        <!-- Double-tap to lock (opção A: Device Admin) -->
+        <receiver
+            android:name=".admin.LockDeviceAdminReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin" android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Double-tap to lock (opção B: Accessibility, GLOBAL_ACTION_LOCK_SCREEN, API 28+).
+             Serviço só roda se o usuário ativar manualmente; sem serviço permanente. -->
+        <service
+            android:name=".access.LockAccessibilityService"
+            android:exported="true"
+            android:label="@string/a11y_lock_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/a11y_lock" />
+        </service>
+
+        <!-- Baseline Profile é instalado no 1º boot, sem custo em runtime depois -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <!-- Remove inicializadores que não usamos: corta tempo de cold start -->
+            <meta-data android:name="androidx.emoji2.text.EmojiCompatInitializer" tools:node="remove" />
+        </provider>
+    </application>
+</manifest>
